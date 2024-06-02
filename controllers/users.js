@@ -2,7 +2,9 @@ const {prisma} = require('../prisma/prisma-client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-
+// @route POST api/user/login
+// @desc Login user
+// @access Public
 const login = async (req, res) => {
 	const { email, password } = req.body;
 
@@ -17,15 +19,17 @@ const login = async (req, res) => {
 	});
 
 	const isPasswordCorrect = user && (await bcrypt.compare(password, user.password));
+	const secret = process.env.JWT_SECRET;
 
-	if (user && isPasswordCorrect) {
+	if (user && isPasswordCorrect && secret) {
 		res.status(200).json({
 			id: user.id,
 			email: user.email,
 			name: user.name,
+			token: jwt.sign({ id: user.id }, secret, { expiresIn: '30d' }), 
 		})
 	} else {
-		return res.status(400).json('Falsche Email oder Passwort')
+		return res.status(400).json({message: 'Falsche Email oder Passwort'})
 	}
 
 }
@@ -33,7 +37,7 @@ const login = async (req, res) => {
 // @route POST api/user/register
 // @desc Register user
 // @access Public
-const register = async (req, res) => {
+const register = async (req, res, next) => {
 	const {email, password, name} = req.body;
 
 	if (!email || !password || !name) {
@@ -69,15 +73,18 @@ const register = async (req, res) => {
 			id: user.id,
 			email: user.email,
 			name: user.name,
-			token: jwt.sign({ id: user.id }, secret, { expiresIn: '1h' }),
+			token: jwt.sign({ id: user.id }, secret, { expiresIn: '30d' }),
 		})
 	} else {
 		return res.status(400).json({message: 'Benutzerdaten konnten nicht erstellt werden!'});
 	}
 }
 
+// @route GET api/user/current
+// @desc Get current user
+// @access Private
 const current = async (req, res) => {
-	res.send('current');
+	return res.status(200).json(req.user)
 }
 
 module.exports = { 
