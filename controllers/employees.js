@@ -68,7 +68,7 @@ const remove = async (req, res) => {
 // @access Private
 const edit = async ( req, res ) => {
 	const data = req.body;
-	const { id } = data.id;
+	const id = data.id;
 
 	try {
 		await prisma.employee.update({
